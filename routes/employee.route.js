@@ -1,0 +1,13 @@
+const Employee=require('../app/controller/employee.controller')
+const { authToThisRoute, auth } = require('../app/mddleware')
+const router =require('express').Router()
+router.post('/employee',Employee.addEmployee)
+router.post('/lavia/employee/login', Employee.logIn)
+router.get('/lavia/confirm/employee/:confimation', auth, authToThisRoute, Employee.myProfile)
+router.put('/activatesupporter/:supporter',auth,authToThisRoute,Employee.activateSupporter)
+router.put('/deactivatesupporter/:supporter',auth,authToThisRoute,Employee.deactivateSupporter)
+router.delete('/employee/:id',auth,authToThisRoute,Employee.deleteEmployee)
+router.put('/employee',auth,authToThisRoute,Employee.editeEmployee)
+router.get('/employee',auth,authToThisRoute,Employee.myProfile)
+router.post('/phonenumber/',auth,authToThisRoute,Employee.addPhoneNumberToEmployee)
+module.exports=router
