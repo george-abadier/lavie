@@ -1,0 +1,21 @@
+
+La Vie Competition
+First of all, I want to thank is organizers of the competition and Eng. Marwa for bringing out the best of us in this scholarship and specially in this project.
+Second, I would like to mention that I am satisfied with my effort and what I have learned from this application, there are a lot of new things I had never done before, I  just learned it to make it in my application despite of not finishing the requirements of the application but I am satisfied because I do my best in this short time to get these productions. 
+This is introducing my production:
+First, I tried to imagine the database and collection in it and the relation between the collections then I get to the role part. 
+mentioning this part:-
+I have to explain that in this application four levels of authorization in the first level that is people who get this application, can get the home page and other things that didn’t need any authentication or having an account on my application. 
+The second role is that for the user who has an account on my application, this role is the targeted client could buy rate chat search having quizzes and rewards and change his settings.
+
+The third role that the supporter or the employee of my website who provides the website with the data and products and answer users' questions. 
+mentioning this role the supporter or the employee can’t make an account without permission from the last role is a manager, the manager have to accept the supporter or employee account to be able to be used and the manager has all the authorization and more form that he could do some authorize thing like deleting an employee, deactivate his account, and he could also make all the roots that the support could do.
+Then I have to mention the authentication part, I make a sign-up that needs to be verified by the user inserted or the employee inserted for being working and not being deleted from the database, and I make login from my Facebook  and google, and my password  and email. 
+The sign-up and the login with google and Facebook have a expire section time of 10 min. 
+The only login that has the feature to remember me part is password and email log in.
+We need to mention that sign-up  without confirmation cause deleting thdaccout from my database and the expired login token is deleted after 10 min when the token expires.
+
+
+Let's know that testing the login form by google account and Facebook account routes must be tested from a browser because take it the cookies from the browser with your login account and forward you to your profile route know that login with a Facebook account will not go so far with anybody but me because the application on Facebook society is in development boot that doesn’t allow any other Facebook account login to this application with this account but the developer himself.
+Finally accept my apologies for not completing the job but please make sure that I learned a lot and did my best but it was short time 
+Thank you
