@@ -15,7 +15,20 @@ module.exports.sendConfirmationEmail = (name, email, confirmationCode) => {
       html: `<h1>Email Confirmation</h1>
           <h2>Hello ${name}</h2>
           <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
-          <a href=http://localhost:3000/lavia/confirm/${confirmationCode}> Click here</a>
+          <a href=http://localhost:3000/lavie/confirm/${confirmationCode}> Click here</a>
+          </div>`,
+    }).catch(err => console.log(err));
+  };
+  module.exports.sendCartConfirmationEmail = (cart,confirmationCode) => {
+    console.log('hhhhh')
+    transport.sendMail({
+      from: process.env.appMail,
+      to: cart.email,
+      subject: "Please confirm your cart",
+      html: `<h1>Email Confirmation</h1>
+          <h2>Hello ${cart.fullname}</h2>
+          <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
+          <a href=http://localhost:3000/lavie/callbackcartconfirm/${confirmationCode}> Click here</a>
           </div>`,
     }).catch(err => console.log(err));
   };
@@ -27,7 +40,7 @@ module.exports.sendConfirmationEmail = (name, email, confirmationCode) => {
       subject: "Please confirm your account",
       html: `<h1>Email for reset your password</h1>
           <h2>Hello ${name}</h2>
-          <form method="post" action="http://localhost:3000/lavia/forgetpass/changepass/${token}">
+          <form method="post" action="http://localhost:3000/lavie/forgetpass/changepass/${token}">
 		<div><label for="email">your email</label>: <input value='${email}' style=" display: block;
 	width: 100%;
 	padding: 0.375rem 0.75rem;

@@ -20,7 +20,7 @@ const dataSchema=mongoose.Schema({
         required:function type(){
             return (this.type=='general')
         },
-        enum:['begginner', 'advanced', 'professional'],
+        enum:['beginner', 'advanced', 'professional'],
         ref:'users'
     },
     subject:{

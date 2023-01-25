@@ -1,5 +1,6 @@
 const roleModel = require('../../db/models/role.model')
 const routeModel = require('../../db/models/route.model')
+const { handlingMyFunction } = require('../helper')
 const Helper = require('../helper')
 class Role {
     static addRole =(req, res) => {
@@ -24,6 +25,11 @@ class Role {
         Helper.handlingMyFunction(req,res,(req)=>{
           return  roleModel.findById(req.params.id)
         },'here is your role')
+    }
+    static getRoles=(req,res)=>{
+        handlingMyFunction(req,res,(req)=>{
+            return roleModel.find()
+        },'here is all roles')
     }
     static editRole=(req,res)=>{
         Helper.handlingMyFunction(req,res,(req)=>{
@@ -56,6 +62,22 @@ class Role {
         },'route deleted')
     }
 }
+const getRoutes=(req,res)=>{
+    handlingMyFunction(req,res,(req)=>{
+        return routeModel.find({routeAction:{$ne:''}})
+    },'here is all permissions')
+}
+const editRouteAction=(req,res)=>{
+    handlingMyFunction(req,res,(req)=>{
+        return routeModel.findByIdAndUpdate(req.params.id,{routeAction:req.params.newName},{returnDocument:'after'})
+    },'name changed successfully')
+}
+//developer methods .....to be removed after development mood.........
+const deleteRoute =(req, res) => {
+    Helper.handlingMyFunction(req,res,async(req)=>{
+        return  routeModel.findByIdAndDelete(req.params.id)
+    },'you insert your route successfully')
+}
 const addRoute =(req, res) => {
     Helper.handlingMyFunction(req,res,async(req)=>{
         const route = routeModel(req.body)
@@ -71,11 +93,8 @@ const addRoute =(req, res) => {
     //     Helper.formatMyAPIRes(res,500,false,e,e.message)
     // }
 }
-const deleteRoute =(req, res) => {
-    Helper.handlingMyFunction(req,res,async(req)=>{
-        return  routeModel.findByIdAndDelete(req.params.id)
-    },'you insert your route successfully')
-}
 module.exports.Role = Role
+module.exports.editRouteAction = editRouteAction
 module.exports.addRoute = addRoute
+module.exports.getRoutes = getRoutes
 module.exports.deleteRoute = deleteRoute

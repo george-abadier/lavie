@@ -12,7 +12,10 @@ const routeSchema=mongoose.Schema({
         required:true,
         uppercase:true
     },
-
+    routeAction:{
+        type:String,
+        default:""
+    }
 })
 const routeModel=mongoose.model('routes',routeSchema)
 module.exports=routeModel

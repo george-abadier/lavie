@@ -4,8 +4,8 @@ const passport = require('passport');
 const { authToThisRoute, auth } = require('../app/mddleware')
 const router = require('express').Router()
 // sign up
-router.post('/lavia/signup', User.signUp)
-router.get('/lavia/confirm/user/:confimation', auth, authToThisRoute, User.myProfile)
+router.post('/lavie/signup', User.signUp)
+router.get('/lavie/confirm/user/:confimation', auth, User.myProfile)
 // login with another app
 router.get('/fail', (req, res) => { res.status(500).send({ apiStatus: false, data: {}, apiMessage: 'somthing go wrong please try to log in again' }) })
 router.get('/good', User.logInByApps)
@@ -16,18 +16,18 @@ router.get('/lavie/facebooklogin/callback', passport.authenticate('facebook', { 
 router.get('/lavie/googlelogin', passport.authenticate('google', { scope: ['profile', 'email'] }))
 router.get('/lavie/googlelogin/callback', passport.authenticate('google', { failureRedirect: '/failed' }), (req, res) => { res.redirect('/good'); })
 // login with username &pass
-router.post('/lavia/login', User.logIn)
+router.post('/lavie/login', User.logIn)
 // forget pass
-router.post('/lavia/forgetpass', User.forgetMyPass)
-router.post('/lavia/forgetpass/changepass/:token', User.resetPass)
+router.post('/lavie/forgetpass', User.forgetMyPass)
+router.post('/lavie/forgetpass/changepass/:token', User.resetPass)
 // log Out
-router.get('/lavie/logout', auth, authToThisRoute, User.logOut)
+router.get('/lavie/logout', auth, User.logOut)
 // privacy policy
 router.get('/lavie/privacypolicy', User.getPrivacyPolicy)
-//set my level
+//set my level      added manually to user only and didn`t need to add to employee since they have no level
 router.post('/lavie/setlevel', auth, authToThisRoute, User.setLevel)
 
-router.get('/lavia/myprofile', auth, User.myProfile)
+router.get('/lavie/myprofile', auth, User.myProfile)
 
 module.exports = router
 

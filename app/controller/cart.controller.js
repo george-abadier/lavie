@@ -1,19 +1,109 @@
 const Helper = require("../helper");
-const cartModel=require('../../db/models/cart.model');
-const { sendConfirmationEmail } = require("../mail");
-class Cart{
-    static addToCart=(req,res)=>{
-        Helper.handlingMyFunction(req,res,async (req)=>{
-           let myCart=await cartModel.findOne({userID:req.user._id,status:'not completed'})
-           if(myCart){
-            myCart.totalPrice+=(req.body.number*req.body.price)
-            myCart.products.push(req.body)
-           }else{
-            myCart=await cartModel({userID:req.user._id,email:req.user.email,totalPrice:(req.body.number*req.body.price)})
-            myCart.products.push(req.body)
-           }
-           return myCart.save()
-        },'added to your cart')
+const cartModel = require('../../db/models/cart.model');
+const tokenModel = require('../../db/models/tokens.model')
+const { sendCartConfirmationEmail } = require("../mail");
+const  jsonWebToken = require("jsonwebtoken");
+class Cart {
+    static addToCart = (req, res) => {
+        Helper.handlingMyFunction(req, res, async (req) => {
+            let myCart = await cartModel.findOne({ userID: req.user._id, status: { $or: ['not completed', "verification mode"] } })
+            if (myCart.status == "verification mode") {
+                throw new Error('please set the situation of your last cart')
+            }
+            if (myCart) {
+                myCart.totalPrice += (req.body.number * req.body.price)
+                const productExist = myCart.products.findIndex(p => { return req.body.product == p.product })
+                if (productExist == -1) {
+                    myCart.products.push(req.body)
+                } else {
+                    myCart.products[productExist].number += parseInt(req.body.number)
+                }
+            } else {
+                myCart = await cartModel({ cartOwnerType: req.user.level ? 'users' : 'employees', userID: req.user._id, email: req.user.email, totalPrice: (req.body.number * req.body.price) })
+                myCart.products.push(req.body)
+            }
+            return myCart.save()
+        }, 'added to your cart')
+    }
+    static updateProductNum = async (req, res) => {
+        try {
+            const myCart = await cartModel.findOne({ userID: req.user._id, status: { $or: ['not completed', "verification mode"] } }).populate('products.product')
+            if (myCart.status == "verification mode") {
+                throw new Error('please set the situation of your last cart')
+            }
+            const i = myCart.products.findIndex(p => { return req.params.product == p.product })
+            if (i == -1) {
+                throw new Error('you don`t have this product in your cart')
+            }
+            const prevNum = myCart.products[i].number
+            myCart.products[i].number += parseInt(req.params.number)
+            if (myCart.products[i].number <= 0) {
+                myCart.products.splice(i, 1)
+                myCart.totalPrice += (myCart.products.product.price * prevNum)
+            } else {
+                myCart.totalPrice += (myCart.products.product.price * req.params.number)
+            }
+            const result = await myCart.save()
+            Helper.formatMyAPIRes(res, 200, true, result, 'your cart  updated')
+        } catch (e) {
+            console.log(e)
+            Helper.formatMyAPIRes(res, 500, false, e, e.message)
+        }
+    }
+    static getMyCart = (req, res) => {
+        Helper.handlingMyFunction(req, res, (req) => {
+            return cartModel.findOne({ userID: req.user._id, status: { $or: ['not completed', "verification mode"] } }).populate('products.product')
+        }, "here is your cart please not if it on verification mode")
+    }
+    static confirmCart = async (req, res) => {
+        try {
+            const fullNameReg = /^[a-zA-z]{3,}\s{1}[a-zA-Z]{3,}$/
+            if (!fullNameReg.test(req.body.fullname)) {
+                throw new Error('please enter your full name right')
+            } if (!req.body.location) {
+                console.log(req.body.location)
+                throw new Error('please enter location to deliver to')
+            } if (req.body.phoneNumbers.length < 2) {
+                throw new Error('please enter 2 contacts at least')
+            } if (!req.body.paymentMethod) {
+                throw new Error('please enter your the suitable payment method to you')
+            }
+            const myCart = await cartModel.findById(req.params.id).populate('products.product')
+            console.log(myCart.products,typeof myCart.products)
+            let totalPrice = 0
+            myCart.products.forEach(p => {
+                totalPrice += (p.product.price * p.number)
+            })
+            myCart.totalPrice = totalPrice
+            myCart.status = 'verification mode'
+            await myCart.save()
+            const confirmation = await tokenModel.creatToken(myCart._id, 0)
+            console.log(confirmation)
+            sendCartConfirmationEmail(myCart, confirmation)
+            Helper.formatMyAPIRes(res, 200, true, {}, 'please check your mail quickly you have 10 mins then you will need to send another confirmation mail')
+        } catch (e) {
+            console.log(e)
+            Helper.formatMyAPIRes(res, 500, false, e, e.message)
+
+        }
+    }
+    static confirmation=async(req,res)=>{
+        try{
+            const decToken=await jsonWebToken.verify(req.params.token,process.env.tokenPass)
+            const myCart=await cartModel.findById(decToken._id)
+            if(myCart.status=='not completed'){
+                throw new Error('you had made some changes in your cart you need to confirm it again ')
+            }
+            myCart.status='is being prepared'
+            const result=await myCart.save()
+            Helper.formatMyAPIRes(res,200,true,result,'your cart '+myCart.status+' we will inform you with any update')
+        // if(!tokenExist){
+        //     throw new Error('this confirmation mail is no longer valid if you did`t confirm your mail yet please resend an new valid confirmation mail ')
+        // }
+        }
+        catch(e){
+            Helper.formatMyAPIRes(res,500,false,e,e.message)
+        }
     }
 }
-module.exports=Cart
+module.exports = Cart

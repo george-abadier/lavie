@@ -3,6 +3,7 @@ const tokenModel=require('../../db/models/tokens.model')
 const employeeModel = require('../../db/models/employee.model')
 const { sendConfirmationEmail } = require("../mail")
 const { handlingMyFunction } = require('../helper')
+const user = require('../../db/models/user.model')
 class Employee {
     static addEmployee = (req, res) => {
         // Helper.handlingMyFunction(req, res, (req) => {
@@ -19,6 +20,7 @@ class Employee {
                 throw new Error('your password doesn`t match the rules')
             }
             const employee = employeeModel(req.body)
+            console.log(employee)
             const token = await tokenModel.creatToken(employee._id)
 
             sendConfirmationEmail(employee.userName, employee.email, 'employee/'+token)
@@ -30,7 +32,7 @@ class Employee {
         try {
             const employee = await employeeModel.logIn(req.body.email, req.body.password)
             if (!employee.status) {
-                throw new Error('please go to your mail to confirm you sign up')
+                throw new Error('please go back to your manger to activate your account')
             }
             const token = await tokenModel.creatToken(employee._id, req.body.rememberMe)
             if (req.body.rememberMe) {
@@ -46,11 +48,12 @@ class Employee {
     }
     static activateSupporter=(req,res)=>{
         Helper.handlingMyFunction(req,res,(req)=>{
-            return employeeModel.findByIdAndUpdate(req.params.supporter,{$set:{status:true}})
+            return employeeModel.findByIdAndUpdate(req.params.supporter,{$set:{status:true}}, { returnDocument: 'after' })
         },'this supporter is active now')
     }
     static deactivateSupporter=(req,res)=>{
-        Helper.handlingMyFunction(req,res,(req)=>{
+        Helper.handlingMyFunction(req,res,async(req)=>{
+            await tokenModel.deleteMany({owner:req.params.supporter})
             return employeeModel.findByIdAndUpdate(req.params.supporter,{$set:{status:false}})
         },'this supporter is inactive now')
     }
@@ -59,7 +62,7 @@ class Employee {
             return employeeModel.findByIdAndDelete(req.params.id)
         }, 'you deleted employee successfully')
     }
-    static editeEmployee = (req, res) => {
+    static editeEmployee_ME = (req, res) => {
         Helper.handlingMyFunction(req, res, (req) => {
             return employeeModel.findByIdAndUpdate(req.user._id, req.body, { returnDocument: 'after' })
         }, 'you add employee')
@@ -69,9 +72,13 @@ class Employee {
             return employeeModel.findById(req.params.id)
         }, 'you add employee')
     }
-    static addPhoneNumberToEmployee = (req, res) => {
+    static getEmployees=(req,res)=>{
+        Helper.handlingMyFunction(req,res,(req)=>{
+            return employeeModel.find(req.body)
+        },"here are all the employees")
+    }
+    static addPhoneNumberToEmployee_Me = (req, res) => {
         Helper.handlingMyFunction(req, res, async (req) => {
-            console.log(req.user.phoneNums.find(phone=>{ return phone.number == req.body.number }))
             if (req.user.phoneNums.find(phone => { return phone.number == req.body.number })) {
                 throw new Error('you have this number already')
             }else{
@@ -100,6 +107,16 @@ class Employee {
                 return req.user
             }
         }, req.user.role.role=='manager'?'congratulation you made a new account here is your profile':'congratulation you made a new job account wait for your manger to activate the account')
+    }
+    static logOut=(req,res)=>{
+        Helper.handlingMyFunction(req,res,(req)=>{
+            return tokenModel.findOneAndDelete({token:req.token})
+        },"you logged out from this browser successfully")
+    }
+    static logOutFromAllDevices=(req,res)=>{
+        Helper.handlingMyFunction(req,res,(req)=>{
+            return tokenModel.deleteMany({owner:req.user._id})
+        },"you logged out from this browser successfully")
     }
 }
 module.exports = Employee

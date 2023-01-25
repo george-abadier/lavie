@@ -19,19 +19,17 @@ const auth = async (req, res, next) => {
 
         const user = await userModel.findById(tokenExist.owner)
         if (!user) {
-            const employee = employeeModel.findById(tokenExist.owner)
+            const employee = await employeeModel.findById(tokenExist.owner).populate('role')
             if (!employee) {
                 throw new Error('invalid token owner')
             }
             if (req.params.confimation) {
-                user.date = ""
-                if (user.role.role == 'manager') { user.status = true }
-                await user.save()
-            }else{
-            req.user = user
+                employee.date = ""
+                if (employee.role.role == 'manager') {employee.status = true }
+                await employee.save()
+            } 
+            req.user = employee
             req.token = token
-            next()
-        }
         } else {
             if (req.params.confimation) {
                 user.date = ""
@@ -40,17 +38,17 @@ const auth = async (req, res, next) => {
             }
             req.user = user
             req.token = token
-            next()
         }
+        next()
     }
     catch (e) {
+        console.log(e)
         helper.formatMyAPIRes(res, 500, false, e, e.message)
     }
 }
 
 const authToThisRoute = async (req, res, next) => {
     const role = await roleModel.findById(req.user.role).populate('routes')
-
     const allowed = role.routes.find(route => {
         return (route.route == req.route.path && route.method == req.method)
     })

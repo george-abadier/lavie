@@ -12,7 +12,7 @@ const answerSchema = mongoose.Schema({
 const quizSchema = mongoose.Schema({
     forLevel: {
         type: String,
-        enum: ['begginner', 'advanced', 'professional'],
+        enum: ['beginner', 'advanced', 'professional'],
         trim: true,
         lowercase: true,
         ref: 'users'

@@ -25,7 +25,6 @@ class User {
     static logIn = async (req, res) => {
         try {
             const userData = await userModel.logIn(req.body.email, req.body.password)
-            console.log(userData.status)
             if (!userData.status) {
                 throw new Error('please go to your mail to confirm you sign up')
             }
@@ -43,9 +42,10 @@ class User {
     }
     static logInByApps = async (req, res) => {
         try {
-            console.log('a')
             const user = await userModel.findOne({ email: req.user.emails[0].value })
-            console.log(user)
+            if(!user){
+                throw new Error('the owner of this account have no account in la vie ')
+            }
             const token = await tokenModel.creatToken(user._id, false)
             await tokenModel({ token, owner: user._id, date: new Date() }).save()
             Helper.formatMyAPIRes(res, 200, true, { user, token }, "you logged in successfully,here is you profile&your token")

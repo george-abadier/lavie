@@ -5,6 +5,11 @@ const tokenSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    // ownerType:{
+    //     type:String,
+    //     enum:['users','employees'],
+    //     required:true
+    // },
     owner:{
         type:mongoose.SchemaTypes.ObjectId,
         required: true,

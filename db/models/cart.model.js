@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
-const { validate } = require('./user.model')
 const locationSchema = mongoose.Schema({
     type: {
         type: String,
@@ -45,18 +44,22 @@ const cartSchema = mongoose.Schema({
         type: locationSchema,
         // required: true
     },
+    cartOwnerType:{
+        type:String,
+        enum:['users','employees'],
+        required: true,
+    },
     userID: {
         type: mongoose.SchemaTypes.ObjectId,
         required: true,
         trim: true,
-        ref:'users'
+        refPath:this.cartOwnerType
     }, 
     email: {
         type: String,
         trim: true,
         lowercase: true,
         required: true,
-        unique: true,
         validate(value) {
             if (!validator.isEmail(value)) {
                 throw new Error('invalid email address')
@@ -67,9 +70,9 @@ const cartSchema = mongoose.Schema({
         type:[phoneNumberSchema],
         // required:true,
         validate(value){
-            if(value.length<2){
-                throw new Error('you must enter two numbers at least')
-            }
+            // if(value.length<2){
+            //     throw new Error('you must enter two numbers at least')
+            // }
         }
     },
     paymentMethod:{
@@ -86,7 +89,7 @@ const cartSchema = mongoose.Schema({
     // },
     status:{
         type:String,
-        enum:['not completed','is being prepared','in it`s way','recieved'],
+        enum:['not completed','verification mode','is being prepared','in it`s way','recieved'],
         default:'not completed',
         trim:true,
         lowercase:true,
@@ -107,10 +110,6 @@ const cartSchema = mongoose.Schema({
             type:Number,
             required:true,
             min:1
-        },
-        price:{
-            type:Number,
-            required:true,
         }
     }]
 })

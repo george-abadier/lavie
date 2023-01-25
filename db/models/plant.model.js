@@ -9,7 +9,7 @@ const plantSchema = mongoose.Schema({
     },
     forLevel:{
         type: String,
-        enum: ['begginner', 'advanced', 'professional'],
+        enum: ['beginner', 'advanced', 'professional'],
         trim: true,
         lowercase: true,
         ref:'users'
@@ -20,10 +20,10 @@ plantSchema.virtual('product',{
     localField:"_id",
     foreignField:"about"
 })
-// plantSchema.virtual('data',{
-//     ref:'data',
-//     localField:"_id",
-//     foreignField:"plant"
-// })
+plantSchema.virtual('data',{
+    ref:'data',
+    localField:"_id",
+    foreignField:"plant"
+})
 const plantModel = mongoose.model('plants', plantSchema)
 module.exports=plantModel
