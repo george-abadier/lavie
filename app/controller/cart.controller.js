@@ -6,11 +6,11 @@ const  jsonWebToken = require("jsonwebtoken");
 class Cart {
     static addToCart = (req, res) => {
         Helper.handlingMyFunction(req, res, async (req) => {
-            let myCart = await cartModel.findOne({ userID: req.user._id, status: { $or: ['not completed', "verification mode"] } })
-            if (myCart.status == "verification mode") {
-                throw new Error('please set the situation of your last cart')
-            }
+            let myCart = await cartModel.findOne({ userID: req.user._id, status: { $in: ['not completed', "verification mode"] } })
             if (myCart) {
+                if (myCart.status == "verification mode") {
+                    throw new Error('please set the situation of your last cart')
+                }
                 myCart.totalPrice += (req.body.number * req.body.price)
                 const productExist = myCart.products.findIndex(p => { return req.body.product == p.product })
                 if (productExist == -1) {
@@ -27,11 +27,11 @@ class Cart {
     }
     static updateProductNum = async (req, res) => {
         try {
-            const myCart = await cartModel.findOne({ userID: req.user._id, status: { $or: ['not completed', "verification mode"] } }).populate('products.product')
+            const myCart = await cartModel.findOne({ userID: req.user._id, status: { $in: ['not completed', "verification mode"] } }).populate('products.product')
             if (myCart.status == "verification mode") {
                 throw new Error('please set the situation of your last cart')
             }
-            const i = myCart.products.findIndex(p => { return req.params.product == p.product })
+            const i = myCart.products.findIndex(p => { return req.params.product == p.product._id })
             if (i == -1) {
                 throw new Error('you don`t have this product in your cart')
             }
@@ -39,9 +39,9 @@ class Cart {
             myCart.products[i].number += parseInt(req.params.number)
             if (myCart.products[i].number <= 0) {
                 myCart.products.splice(i, 1)
-                myCart.totalPrice += (myCart.products.product.price * prevNum)
+                myCart.totalPrice += (myCart.products[i].product.price * prevNum)
             } else {
-                myCart.totalPrice += (myCart.products.product.price * req.params.number)
+                myCart.totalPrice += (myCart.products[i].product.price * parseInt(req.params.number))
             }
             const result = await myCart.save()
             Helper.formatMyAPIRes(res, 200, true, result, 'your cart  updated')
@@ -52,12 +52,16 @@ class Cart {
     }
     static getMyCart = (req, res) => {
         Helper.handlingMyFunction(req, res, (req) => {
-            return cartModel.findOne({ userID: req.user._id, status: { $or: ['not completed', "verification mode"] } }).populate('products.product')
-        }, "here is your cart please not if it on verification mode")
+            return cartModel.findOne({ userID: req.user._id, status: { $in: ['not completed', "verification mode"] } }).populate('products.product')
+        }, "here is your cart please note if it on verification mode")
     }
     static confirmCart = async (req, res) => {
         try {
             const fullNameReg = /^[a-zA-z]{3,}\s{1}[a-zA-Z]{3,}$/
+            const myCart = await cartModel.findById(req.params.id).populate('products.product')
+            if(myCart.status!='not completed'){
+                throw new Error('this cart had a step forward this action for the uncompleted carts')
+            }
             if (!fullNameReg.test(req.body.fullname)) {
                 throw new Error('please enter your full name right')
             } if (!req.body.location) {
@@ -68,7 +72,6 @@ class Cart {
             } if (!req.body.paymentMethod) {
                 throw new Error('please enter your the suitable payment method to you')
             }
-            const myCart = await cartModel.findById(req.params.id).populate('products.product')
             console.log(myCart.products,typeof myCart.products)
             let totalPrice = 0
             myCart.products.forEach(p => {
