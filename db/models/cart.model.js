@@ -89,7 +89,7 @@ const cartSchema = mongoose.Schema({
     // },
     status:{
         type:String,
-        enum:['not completed','verification mode','is being prepared','in it`s way','recieved'],
+        enum:['not completed','verification mode','is being prepared','in its way','received'],
         default:'not completed',
         trim:true,
         lowercase:true,

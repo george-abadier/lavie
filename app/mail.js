@@ -31,6 +31,18 @@ module.exports.sendConfirmationEmail = (name, email, confirmationCode) => {
           <a href=http://localhost:3000/lavie/callbackcartconfirm/${confirmationCode}> Click here</a>
           </div>`,
     }).catch(err => console.log(err));
+  }; module.exports.sendCartStatusEmail = (cart) => {
+    console.log('hhhhh')
+    transport.sendMail({
+      from: process.env.appMail,
+      to: cart.email,
+      subject: "Please confirm your cart",
+      html: `<h1>Email Confirmation</h1>
+          <h2>Hello ${cart.fullname}</h2>
+          <p>we need to inform you that your cart <h4>${cart.status}</h4></p>
+          ${cart.status=='in it`s way'?'wait our representative soon':'please inform us with your review or any complain'}
+          </div>`,
+    }).catch(err => console.log(err));
   };
   module.exports.sendResetPassEmail=(name, email,token) => {
     console.log(process.env.appMailPass);

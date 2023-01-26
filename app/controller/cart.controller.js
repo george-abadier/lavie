@@ -1,7 +1,7 @@
 const Helper = require("../helper");
 const cartModel = require('../../db/models/cart.model');
 const tokenModel = require('../../db/models/tokens.model')
-const { sendCartConfirmationEmail } = require("../mail");
+const { sendCartConfirmationEmail,sendCartStatusEmail } = require("../mail");
 const  jsonWebToken = require("jsonwebtoken");
 class Cart {
     static addToCart = (req, res) => {
@@ -28,23 +28,27 @@ class Cart {
     static updateProductNum = async (req, res) => {
         try {
             const myCart = await cartModel.findOne({ userID: req.user._id, status: { $in: ['not completed', "verification mode"] } }).populate('products.product')
+            if(myCart==null){
+                res.redirect('/lavie/addtocart')
+            }else{
             if (myCart.status == "verification mode") {
                 throw new Error('please set the situation of your last cart')
             }
-            const i = myCart.products.findIndex(p => { return req.params.product == p.product._id })
+            const i = myCart.products.findIndex(p => { return req.body.product == p.product._id })
             if (i == -1) {
                 throw new Error('you don`t have this product in your cart')
             }
             const prevNum = myCart.products[i].number
-            myCart.products[i].number += parseInt(req.params.number)
+            myCart.products[i].number += parseInt(req.body.number)
             if (myCart.products[i].number <= 0) {
                 myCart.products.splice(i, 1)
                 myCart.totalPrice += (myCart.products[i].product.price * prevNum)
             } else {
-                myCart.totalPrice += (myCart.products[i].product.price * parseInt(req.params.number))
+                myCart.totalPrice += (myCart.products[i].product.price * parseInt(req.body.number))
             }
             const result = await myCart.save()
             Helper.formatMyAPIRes(res, 200, true, result, 'your cart  updated')
+        }
         } catch (e) {
             console.log(e)
             Helper.formatMyAPIRes(res, 500, false, e, e.message)
@@ -81,7 +85,6 @@ class Cart {
             myCart.status = 'verification mode'
             await myCart.save()
             const confirmation = await tokenModel.creatToken(myCart._id, 0)
-            console.log(confirmation)
             sendCartConfirmationEmail(myCart, confirmation)
             Helper.formatMyAPIRes(res, 200, true, {}, 'please check your mail quickly you have 10 mins then you will need to send another confirmation mail')
         } catch (e) {
@@ -97,6 +100,9 @@ class Cart {
             if(myCart.status=='not completed'){
                 throw new Error('you had made some changes in your cart you need to confirm it again ')
             }
+            if(myCart.status!="verification mode"){
+                throw new Error('we had go forward with your cart after this action your cart '+myCart.status)
+            }
             myCart.status='is being prepared'
             const result=await myCart.save()
             Helper.formatMyAPIRes(res,200,true,result,'your cart '+myCart.status+' we will inform you with any update')
@@ -105,6 +111,66 @@ class Cart {
         // }
         }
         catch(e){
+            Helper.formatMyAPIRes(res,500,false,e,e.message)
+        }
+    }
+    static resendConfirmationMail=async (req,res)=>{
+        try{
+            const myCart=await cartModel.findById(req.params.id)
+            if(myCart.status!="verification mode"){
+                throw new Error('this action is not for your cart status')
+            }
+            console.log(myCart)
+            const confirmation = await tokenModel.creatToken(myCart._id, 0)
+            sendCartConfirmationEmail(myCart, confirmation)
+            Helper.formatMyAPIRes(res, 200, true, {}, 'please check your mail quickly you have 10 mins then you will need to send another confirmation mail')
+        }
+        catch(e){
+            Helper.formatMyAPIRes(res,500,false,e,e.message)
+        }
+    }
+    static returnToChange =async(req,res)=>{
+        try{
+            const myCart=await cartModel.findById(req.params.id)
+            if(myCart.status=='not completed'){
+                throw new Error('your cart already in un completed mode')
+            }
+            if(myCart.status!="verification mode"){
+                throw new Error('that is not possible now your already confirm your cart and it '+myCart.status)
+            }
+            myCart.status='not completed'
+            const result= await myCart.save()
+            Helper.formatMyAPIRes(res, 200, true, result, 'now you can make changes in your cart ')
+        }
+        catch(e){
+            Helper.formatMyAPIRes(res,500,false,e,e.message)
+        }
+    
+    }
+    static getCartTask=(req,res)=>{
+        Helper.handlingMyFunction(req,res,(req)=>{
+            return cartModel.find({status:{$in:['is being prepared','in its way']}})
+        },'here is the carts that needed to be worked on')
+    }
+    static nextStep=async(req,res)=>{
+        try{
+            const cart=await cartModel.findById(req.params.id)
+            if(cart.status=='not completed'||cart.status=="verification mode"){
+                throw new Error('the user didn`t complete and verify his cart')
+            }
+            if(cart.status=='received'){
+                throw new Error('this cart is received ,and there is`t any action else to be done')
+            }
+            console.log(cart.status)
+            if(cart.status=='is being prepared'){
+                cart.status='in its way'
+            }else if(cart.status=='in its way'){
+                cart.status='received'
+            }
+            const result=await cart.save()
+            sendCartStatusEmail(cart)
+            Helper.formatMyAPIRes(res, 200, true, result, 'now you can make changes in your cart ')
+        }catch(e){
             Helper.formatMyAPIRes(res,500,false,e,e.message)
         }
     }
