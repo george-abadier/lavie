@@ -68,15 +68,20 @@ class Cart {
             }
             if (!fullNameReg.test(req.body.fullname)) {
                 throw new Error('please enter your full name right')
-            } if (!req.body.location) {
-                console.log(req.body.location)
+            }
+            myCart.fullname=req.body.fullname 
+            if (!req.body.location) {
                 throw new Error('please enter location to deliver to')
-            } if (req.body.phoneNumbers.length < 2) {
+            } 
+            myCart.location=req.body.location
+            if (req.body.phoneNumbers.length < 2) {
                 throw new Error('please enter 2 contacts at least')
-            } if (!req.body.paymentMethod) {
+            }
+            myCart.phoneNumbers=req.body.phoneNumbers
+             if (!req.body.paymentMethod) {
                 throw new Error('please enter your the suitable payment method to you')
             }
-            console.log(myCart.products,typeof myCart.products)
+            myCart.paymentMethod=req.body.paymentMethod
             let totalPrice = 0
             myCart.products.forEach(p => {
                 totalPrice += (p.product.price * p.number)
@@ -120,7 +125,6 @@ class Cart {
             if(myCart.status!="verification mode"){
                 throw new Error('this action is not for your cart status')
             }
-            console.log(myCart)
             const confirmation = await tokenModel.creatToken(myCart._id, 0)
             sendCartConfirmationEmail(myCart, confirmation)
             Helper.formatMyAPIRes(res, 200, true, {}, 'please check your mail quickly you have 10 mins then you will need to send another confirmation mail')
@@ -149,7 +153,7 @@ class Cart {
     }
     static getCartTask=(req,res)=>{
         Helper.handlingMyFunction(req,res,(req)=>{
-            return cartModel.find({status:{$in:['is being prepared','in its way']}})
+            return cartModel.find({status:{$in:['is being prepared','in its way']}}).populate('userID')
         },'here is the carts that needed to be worked on')
     }
     static nextStep=async(req,res)=>{
@@ -161,7 +165,6 @@ class Cart {
             if(cart.status=='received'){
                 throw new Error('this cart is received ,and there is`t any action else to be done')
             }
-            console.log(cart.status)
             if(cart.status=='is being prepared'){
                 cart.status='in its way'
             }else if(cart.status=='in its way'){

@@ -44,17 +44,17 @@ const cartSchema = mongoose.Schema({
         type: locationSchema,
         // required: true
     },
+    userID: {
+        type: mongoose.SchemaTypes.ObjectId,
+        required: true,
+        trim: true,
+        refPath:'cartOwnerType'
+    }, 
     cartOwnerType:{
         type:String,
         enum:['users','employees'],
         required: true,
     },
-    userID: {
-        type: mongoose.SchemaTypes.ObjectId,
-        required: true,
-        trim: true,
-        refPath:this.cartOwnerType
-    }, 
     email: {
         type: String,
         trim: true,
